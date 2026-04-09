@@ -85,7 +85,7 @@ class Admin(db.Model):
     last_login = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
     is_master_admin = db.Column(db.Boolean, default=False)
-    organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
+    organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     
     def set_password(self, password):
         """Hash password using SHA-256"""
@@ -304,10 +304,10 @@ def utility_processor():
         is_master_admin=is_master_admin
     )
 
-# ============ DATABASE INITIALIZATION ============
+# ============ FIXED DATABASE INITIALIZATION ============
 
 def init_database():
-    """Initialize database with default data - safe for production"""
+    """Initialize database with default data - FIXED ORDER for PostgreSQL"""
     with app.app_context():
         # Create all tables if they don't exist
         db.create_all()
@@ -315,68 +315,86 @@ def init_database():
         
         # Check if master admin exists
         master_admin = Admin.query.filter_by(is_master_admin=True).first()
+        
         if not master_admin:
-            logger.info("Creating master admin...")
-            # Create organization for master admin
-            master_org = Organization(
-                name="Master Admin Organization",
-                admin_id=0,
-                max_customers=999999,
-                subscription_plan="enterprise"
-            )
-            db.session.add(master_org)
-            db.session.flush()
+            logger.info("Creating master admin and organization...")
             
+            # STEP 1: Create master admin FIRST (without organization)
             master_admin = Admin(
                 username='master_admin',
                 full_name='Master Administrator',
                 email='master@loansaving.com',
                 is_master_admin=True,
-                organization_id=master_org.id
+                is_active=True,
+                organization_id=None  # No organization yet
             )
             master_admin.set_password('MasterAdmin123!')
             db.session.add(master_admin)
+            db.session.flush()  # This gives master_admin an ID
             
-            master_org.admin_id = master_admin.id
+            # STEP 2: Create organization with the valid admin_id
+            master_org = Organization(
+                name="Master Admin Organization",
+                admin_id=master_admin.id,  # Now we have a valid ID
+                max_customers=999999,
+                subscription_plan="enterprise",
+                is_active=True
+            )
+            db.session.add(master_org)
+            db.session.flush()
+            
+            # STEP 3: Update admin with organization_id
+            master_admin.organization_id = master_org.id
+            
             db.session.commit()
             
             print("=" * 60)
-            print("MASTER ADMIN CREATED")
-            print("Username: master_admin")
-            print("Password: MasterAdmin123!")
+            print("✅ MASTER ADMIN CREATED SUCCESSFULLY!")
+            print("📋 Username: master_admin")
+            print("🔑 Password: MasterAdmin123!")
             print("=" * 60)
             logger.info("Master admin created successfully")
         else:
             logger.info("Master admin already exists")
         
         # Check if demo organization exists
-        if not Organization.query.filter_by(name="Demo Business").first():
+        demo_org = Organization.query.filter_by(name="Demo Business").first()
+        if not demo_org:
             logger.info("Creating demo organization...")
-            demo_org = Organization(
-                name="Demo Business",
-                admin_id=0,
-                max_customers=50,
-                subscription_plan="basic",
-                business_address="123 Demo Street, Lagos, Nigeria",
-                business_phone="08012345678"
-            )
-            db.session.add(demo_org)
-            db.session.flush()
             
+            # STEP 1: Create demo admin FIRST
             demo_admin = Admin(
                 username='demo_admin',
                 full_name='Demo Administrator',
                 email='demo@example.com',
                 is_master_admin=False,
-                organization_id=demo_org.id
+                is_active=True,
+                organization_id=None
             )
             demo_admin.set_password('demo123')
             db.session.add(demo_admin)
+            db.session.flush()
             
-            demo_org.admin_id = demo_admin.id
+            # STEP 2: Create demo organization with valid admin_id
+            demo_org = Organization(
+                name="Demo Business",
+                admin_id=demo_admin.id,
+                max_customers=50,
+                subscription_plan="basic",
+                business_address="123 Demo Street, Lagos, Nigeria",
+                business_phone="08012345678",
+                is_active=True
+            )
+            db.session.add(demo_org)
+            db.session.flush()
+            
+            # STEP 3: Update admin with organization_id
+            demo_admin.organization_id = demo_org.id
+            
             db.session.commit()
             
-            print("Demo admin created - Username: demo_admin, Password: demo123")
+            print("✅ Demo organization created!")
+            print("📋 Demo Admin: demo_admin / demo123")
             logger.info("Demo organization created successfully")
         else:
             logger.info("Demo organization already exists")
@@ -562,10 +580,23 @@ def create_organization():
             flash('Password must be at least 6 characters', 'danger')
             return redirect(url_for('create_organization'))
         
-        # Create organization
+        # STEP 1: Create admin FIRST (without organization)
+        new_admin = Admin(
+            username=admin_username,
+            email=admin_email,
+            full_name=admin_full_name,
+            is_master_admin=False,
+            is_active=True,
+            organization_id=None
+        )
+        new_admin.set_password(admin_password)
+        db.session.add(new_admin)
+        db.session.flush()  # This gives new_admin an ID
+        
+        # STEP 2: Create organization with the valid admin_id
         organization = Organization(
             name=org_name,
-            admin_id=0,
+            admin_id=new_admin.id,  # Now we have a valid ID
             max_customers=max_customers,
             subscription_plan=subscription_plan,
             business_phone=business_phone,
@@ -575,20 +606,8 @@ def create_organization():
         db.session.add(organization)
         db.session.flush()
         
-        # Create admin for this organization
-        new_admin = Admin(
-            username=admin_username,
-            email=admin_email,
-            full_name=admin_full_name,
-            is_master_admin=False,
-            organization_id=organization.id,
-            is_active=True
-        )
-        new_admin.set_password(admin_password)
-        db.session.add(new_admin)
-        
-        # Update organization with admin_id
-        organization.admin_id = new_admin.id
+        # STEP 3: Update admin with organization_id
+        new_admin.organization_id = organization.id
         
         db.session.commit()
         
