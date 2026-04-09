@@ -307,13 +307,13 @@ def utility_processor():
 # ============ FIXED DATABASE INITIALIZATION ============
 
 def init_database():
-    """Initialize database with default data - FIXED ORDER for PostgreSQL"""
+    """Initialize database with default data - CORRECTED VERSION"""
     with app.app_context():
-        # Create all tables if they don't exist
+        # Create all tables first
         db.create_all()
         logger.info("Database tables created/verified")
         
-        # Check if master admin exists
+        # Check if master admin already exists
         master_admin = Admin.query.filter_by(is_master_admin=True).first()
         
         if not master_admin:
@@ -330,7 +330,7 @@ def init_database():
             )
             master_admin.set_password('MasterAdmin123!')
             db.session.add(master_admin)
-            db.session.flush()  # This gives master_admin an ID
+            db.session.flush()  # This gives master_admin an ID (not 0!)
             
             # STEP 2: Create organization with the valid admin_id
             master_org = Organization(
@@ -358,8 +358,7 @@ def init_database():
             logger.info("Master admin already exists")
         
         # Check if demo organization exists
-        demo_org = Organization.query.filter_by(name="Demo Business").first()
-        if not demo_org:
+        if not Organization.query.filter_by(name="Demo Business").first():
             logger.info("Creating demo organization...")
             
             # STEP 1: Create demo admin FIRST
@@ -398,9 +397,6 @@ def init_database():
             logger.info("Demo organization created successfully")
         else:
             logger.info("Demo organization already exists")
-
-# Run initialization
-init_database()
 
 # ============ AUTHENTICATION ROUTES ============
 
@@ -591,7 +587,7 @@ def create_organization():
         )
         new_admin.set_password(admin_password)
         db.session.add(new_admin)
-        db.session.flush()  # This gives new_admin an ID
+        db.session.flush()
         
         # STEP 2: Create organization with the valid admin_id
         organization = Organization(
