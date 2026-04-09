@@ -67,12 +67,12 @@ class Organization(db.Model):
         return current_count < self.max_customers
     
     def get_stats(self):
+        customers = Customer.query.filter_by(org_id=self.id, is_active=True).all()
         return {
-            'customer_count': Customer.query.filter_by(org_id=self.id, is_active=True).count(),
+            'customer_count': len(customers),
             'active_loans': Loan.query.filter_by(org_id=self.id, status='active').count(),
-            'total_savings': sum(s.amount for s in Saving.query.filter_by(org_id=self.id, transaction_type='deposit').all()) - 
-                            sum(s.amount for s in Saving.query.filter_by(org_id=self.id, transaction_type='withdrawal').all()),
-            'total_loans_outstanding': sum(l.amount - l.amount_repaid for l in Loan.query.filter_by(org_id=self.id, status='active').all())
+            'total_savings': sum(c.total_savings() for c in customers),
+            'total_loans_outstanding': sum(c.total_loan_balance() for c in customers)
         }
 
 class Admin(db.Model):
@@ -304,22 +304,22 @@ def utility_processor():
         is_master_admin=is_master_admin
     )
 
-# ============ FIXED DATABASE INITIALIZATION ============
+# ============ CORRECTED DATABASE INITIALIZATION ============
 
 def init_database():
-    """Initialize database with default data - CORRECTED VERSION"""
+    """Initialize database with default data - CORRECTED ORDER for PostgreSQL"""
     with app.app_context():
         # Create all tables first
         db.create_all()
         logger.info("Database tables created/verified")
         
-        # Check if master admin already exists
+        # Check if master admin exists (by looking for is_master_admin=True)
         master_admin = Admin.query.filter_by(is_master_admin=True).first()
         
         if not master_admin:
             logger.info("Creating master admin and organization...")
             
-            # STEP 1: Create master admin FIRST (without organization)
+            # STEP 1: Create admin FIRST (without organization_id)
             master_admin = Admin(
                 username='master_admin',
                 full_name='Master Administrator',
@@ -330,18 +330,24 @@ def init_database():
             )
             master_admin.set_password('MasterAdmin123!')
             db.session.add(master_admin)
-            db.session.flush()  # This gives master_admin an ID (not 0!)
+            db.session.flush()  # This gives master_admin a REAL ID (1, not 0)
             
-            # STEP 2: Create organization with the valid admin_id
+            print(f"✅ Admin created with ID: {master_admin.id}")
+            logger.info(f"Admin created with ID: {master_admin.id}")
+            
+            # STEP 2: Create organization with the REAL admin_id
             master_org = Organization(
                 name="Master Admin Organization",
-                admin_id=master_admin.id,  # Now we have a valid ID
+                admin_id=master_admin.id,  # Use the REAL ID, NOT 0!
                 max_customers=999999,
                 subscription_plan="enterprise",
                 is_active=True
             )
             db.session.add(master_org)
             db.session.flush()
+            
+            print(f"✅ Organization created with admin_id: {master_org.admin_id}")
+            logger.info(f"Organization created with admin_id: {master_org.admin_id}")
             
             # STEP 3: Update admin with organization_id
             master_admin.organization_id = master_org.id
@@ -358,7 +364,8 @@ def init_database():
             logger.info("Master admin already exists")
         
         # Check if demo organization exists
-        if not Organization.query.filter_by(name="Demo Business").first():
+        demo_org = Organization.query.filter_by(name="Demo Business").first()
+        if not demo_org:
             logger.info("Creating demo organization...")
             
             # STEP 1: Create demo admin FIRST
@@ -374,10 +381,13 @@ def init_database():
             db.session.add(demo_admin)
             db.session.flush()
             
-            # STEP 2: Create demo organization with valid admin_id
+            print(f"✅ Demo admin created with ID: {demo_admin.id}")
+            logger.info(f"Demo admin created with ID: {demo_admin.id}")
+            
+            # STEP 2: Create demo organization with REAL admin_id
             demo_org = Organization(
                 name="Demo Business",
-                admin_id=demo_admin.id,
+                admin_id=demo_admin.id,  # Use REAL ID, NOT 0!
                 max_customers=50,
                 subscription_plan="basic",
                 business_address="123 Demo Street, Lagos, Nigeria",
@@ -387,7 +397,7 @@ def init_database():
             db.session.add(demo_org)
             db.session.flush()
             
-            # STEP 3: Update admin with organization_id
+            # STEP 3: Update demo admin with organization_id
             demo_admin.organization_id = demo_org.id
             
             db.session.commit()
@@ -397,6 +407,9 @@ def init_database():
             logger.info("Demo organization created successfully")
         else:
             logger.info("Demo organization already exists")
+
+# Run initialization
+init_database()
 
 # ============ AUTHENTICATION ROUTES ============
 
@@ -589,10 +602,10 @@ def create_organization():
         db.session.add(new_admin)
         db.session.flush()
         
-        # STEP 2: Create organization with the valid admin_id
+        # STEP 2: Create organization with the REAL admin_id
         organization = Organization(
             name=org_name,
-            admin_id=new_admin.id,  # Now we have a valid ID
+            admin_id=new_admin.id,  # Use the REAL ID, NOT 0!
             max_customers=max_customers,
             subscription_plan=subscription_plan,
             business_phone=business_phone,
