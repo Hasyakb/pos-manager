@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-building"></i> Create New Organization</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <h5 class="mb-3 text-primary">Organization Details</h5>
+                    <div class="mb-3">
+                        <label>Organization/Business Name *</label>
+                        <input type="text" name="org_name" class="form-control" required>
+                        <small class="text-muted">This will be displayed as the business name</small>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Business Phone</label>
+                            <input type="text" name="business_phone" class="form-control" placeholder="080XXXXXXXX">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Subscription Plan *</label>
+                            <select name="subscription_plan" class="form-select" required>
+                                <option value="basic">Basic (500 customers)</option>
+                                <option value="premium">Premium (2000 customers)</option>
+                                <option value="enterprise">Enterprise (Unlimited)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Business Address</label>
+                        <textarea name="business_address" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Max Customers</label>
+                        <input type="number" name="max_customers" class="form-control" value="500">
+                        <small class="text-muted">Override based on subscription plan</small>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h5 class="mb-3 text-primary">Admin Account Details</h5>
+                    
+                    <div class="mb-3">
+                        <label>Admin Username *</label>
+                        <input type="text" name="admin_username" class="form-control" required>
+                        <small class="text-muted">Unique username for login</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Admin Password *</label>
+                        <input type="password" name="admin_password" class="form-control" required>
+                        <small class="text-muted">Minimum 6 characters</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Admin Full Name</label>
+                        <input type="text" name="admin_full_name" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Admin Email</label>
+                        <input type="email" name="admin_email" class="form-control">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus-circle"></i> Create Organization & Admin
+                    </button>
+                    <a href="{{ url_for('manage_organizations') }}" class="btn btn-secondary w-100 mt-2">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

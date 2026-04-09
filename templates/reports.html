@@ -1,0 +1,66 @@
+<!-- templates/reports.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-chart-bar"></i> Reports Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-users fa-3x mb-2"></i>
+            <h3>{{ total_customers|format_number }}</h3>
+            <p>Total Customers</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-piggy-bank fa-3x mb-2"></i>
+            <h3>{{ total_savings|format_currency }}</h3>
+            <p>Total Savings</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-hand-holding-usd fa-3x mb-2"></i>
+            <h3>{{ total_loans_outstanding|format_currency }}</h3>
+            <p>Outstanding Loans</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-chart-line fa-3x mb-2"></i>
+            <h3>{{ active_loans|format_number }}</h3>
+            <p>Active Loans</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-info-circle"></i> System Features</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i> No-interest loans for customers
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i> Flexible savings management in Naira (₦)
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i> Proxy collection for loan payments and savings
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i> Option to use savings for loan repayment
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success"></i> Real-time balance tracking with formatted numbers
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

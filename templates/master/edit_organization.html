@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-edit"></i> Edit Organization: {{ org.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Organization/Business Name *</label>
+                        <input type="text" name="org_name" class="form-control" value="{{ org.name }}" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label>Business Phone</label>
+                            <input type="text" name="business_phone" class="form-control" value="{{ org.business_phone or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Subscription Plan *</label>
+                            <select name="subscription_plan" class="form-select" required>
+                                <option value="basic" {% if org.subscription_plan == 'basic' %}selected{% endif %}>Basic (500 customers)</option>
+                                <option value="premium" {% if org.subscription_plan == 'premium' %}selected{% endif %}>Premium (2000 customers)</option>
+                                <option value="enterprise" {% if org.subscription_plan == 'enterprise' %}selected{% endif %}>Enterprise (Unlimited)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Business Address</label>
+                        <textarea name="business_address" class="form-control" rows="2">{{ org.business_address or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Max Customers</label>
+                        <input type="number" name="max_customers" class="form-control" value="{{ org.max_customers }}">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save"></i> Update Organization
+                    </button>
+                    <a href="{{ url_for('manage_organizations') }}" class="btn btn-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left"></i> Back to Organizations
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

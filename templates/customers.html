@@ -1,0 +1,96 @@
+<!-- templates/customers.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-users"></i> Active Customers</h2>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('customers') }}" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search by name or phone" value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('add_customer') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New Customer
+        </a>
+        <a href="{{ url_for('deleted_customers') }}" class="btn btn-warning ms-2">
+            <i class="fas fa-trash-alt"></i> Deleted Customers
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for customer in customers if customer.is_active %}
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ customer.name }}</h5>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <p class="card-text">
+                    <i class="fas fa-phone"></i> {{ customer.phone }}<br>
+                    <i class="fas fa-envelope"></i> {{ customer.email or 'N/A' }}<br>
+                    <i class="fas fa-piggy-bank"></i> Savings: {{ customer.total_savings()|format_currency }}<br>
+                    <i class="fas fa-hand-holding-usd"></i> Loan Balance: {{ customer.total_loan_balance()|format_currency }}
+                </p>
+                <div class="btn-group w-100">
+                    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.id }}">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal for each customer -->
+    <div class="modal fade" id="deleteModal{{ customer.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong>{{ customer.name }}</strong>?</p>
+                    <p class="text-danger">
+                        <i class="fas fa-info-circle"></i> 
+                        This will deactivate the customer. You can restore them later from the "Deleted Customers" section.
+                    </p>
+                    {% if customer.total_loan_balance() > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Warning: This customer has an outstanding loan balance of {{ customer.total_loan_balance()|format_currency }}.
+                        Please ensure all loans are settled before deletion.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('delete_customer', customer_id=customer.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Yes, Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No active customers found.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

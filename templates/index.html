@@ -1,0 +1,34 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-md-6 mx-auto text-center">
+        <h1 class="display-4 mb-4">Welcome to Loan & Savings Manager</h1>
+        <p class="lead">Manage your no-interest loans and savings efficiently</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <i class="fas fa-user-plus fa-3x mb-3" style="color: #667eea;"></i>
+                        <h5 class="card-title">Register Customer</h5>
+                        <p class="card-text">Add new customers to the system</p>
+                        <a href="{{ url_for('add_customer') }}" class="btn btn-primary">Register</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x mb-3" style="color: #667eea;"></i>
+                        <h5 class="card-title">View Customers</h5>
+                        <p class="card-text">Manage existing customers</p>
+                        <a href="{{ url_for('customers') }}" class="btn btn-primary">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

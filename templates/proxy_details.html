@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4>Proxy Collection Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Collection ID:</strong> #{{ proxy.id }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Date:</strong> {{ proxy.collection_date.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Customer:</strong><br>
+                        <h5>{{ proxy.customer.name }}</h5>
+                        <p class="text-muted">Phone: {{ proxy.customer.phone }}<br>
+                        Email: {{ proxy.customer.email or 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Collector:</strong><br>
+                        <h5>{{ proxy.collector_name }}</h5>
+                        <p class="text-muted">Phone: {{ proxy.collector_phone or 'N/A' }}<br>
+                        Relationship: {{ proxy.relationship or 'Not specified' }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Collection Type:</strong><br>
+                        {% if proxy.collection_type == 'loan' %}
+                            <span class="badge bg-primary">Loan Payment</span>
+                        {% else %}
+                            <span class="badge bg-success">Savings Deposit</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Amount:</strong><br>
+                        <h3 class="text-primary">${{ "%.2f"|format(proxy.amount) }}</h3>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('proxy_history') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

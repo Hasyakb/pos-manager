@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h3>Welcome to {{ org.name }}</h3>
+                <p class="mb-0">Manage your customers, savings, and loans efficiently</p>
+                {% if org.business_phone or org.business_address %}
+                <small>
+                    {% if org.business_phone %}<i class="fas fa-phone"></i> {{ org.business_phone }}{% endif %}
+                    {% if org.business_address %} | <i class="fas fa-map-marker-alt"></i> {{ org.business_address }}{% endif %}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-users fa-3x mb-2"></i>
+            <h3>{{ stats.customer_count|format_number }}</h3>
+            <p>Active Customers</p>
+            <small class="text-white-50">/{{ org.max_customers }} limit</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-piggy-bank fa-3x mb-2"></i>
+            <h3>{{ stats.total_savings|format_currency }}</h3>
+            <p>Total Savings</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-hand-holding-usd fa-3x mb-2"></i>
+            <h3>{{ stats.total_loans_outstanding|format_currency }}</h3>
+            <p>Outstanding Loans</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-chart-line fa-3x mb-2"></i>
+            <h3>{{ stats.active_loans|format_number }}</h3>
+            <p>Active Loans</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-plus"></i> Recent Customers</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_customers %}
+                <div class="list-group">
+                    {% for customer in recent_customers %}
+                    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ customer.name }}</strong><br>
+                                <small class="text-muted"><i class="fas fa-phone"></i> {{ customer.phone }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-success">Savings: {{ customer.total_savings()|format_currency }}</small><br>
+                                <small class="text-danger">Loan: {{ customer.total_loan_balance()|format_currency }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No customers yet. <a href="{{ url_for('add_customer') }}">Add your first customer</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_savings %}
+                <div class="list-group">
+                    {% for saving in recent_savings %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ saving.customer.name }}</strong><br>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt"></i> {{ saving.transaction_date.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                            <div>
+                                {% if saving.transaction_type == 'deposit' %}
+                                    <span class="badge bg-success">Deposit</span>
+                                    <span class="text-success fw-bold">+{{ saving.amount|format_currency }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Withdrawal</span>
+                                    <span class="text-danger fw-bold">-{{ saving.amount|format_currency }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if saving.description %}
+                        <small class="text-muted">{{ saving.description }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No transactions yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('add_customer') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus"></i> Add Customer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('customers') }}" class="btn btn-info w-100">
+                            <i class="fas fa-users"></i> View Customers
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('savings_history') }}" class="btn btn-success w-100">
+                            <i class="fas fa-piggy-bank"></i> Savings History
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('reports') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

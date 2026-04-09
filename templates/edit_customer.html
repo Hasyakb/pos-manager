@@ -1,0 +1,36 @@
+<!-- templates/edit_customer.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4>Edit Customer</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Full Name *</label>
+                        <input type="text" name="name" class="form-control" value="{{ customer.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Phone Number *</label>
+                        <input type="tel" name="phone" class="form-control" value="{{ customer.phone }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ customer.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label>Address</label>
+                        <textarea name="address" class="form-control" rows="3">{{ customer.address }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Update Customer</button>
+                    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

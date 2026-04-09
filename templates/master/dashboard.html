@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Master Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-building fa-3x mb-2"></i>
+            <h3>{{ total_organizations|format_number }}</h3>
+            <p>Total Organizations</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-users fa-3x mb-2"></i>
+            <h3>{{ total_customers|format_number }}</h3>
+            <p>Total Customers</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-hand-holding-usd fa-3x mb-2"></i>
+            <h3>{{ total_loans_outstanding|format_currency }}</h3>
+            <p>Outstanding Loans</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <i class="fas fa-piggy-bank fa-3x mb-2"></i>
+            <h3>{{ total_savings|format_currency }}</h3>
+            <p>Total Savings</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-building"></i> Recent Organizations</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Organization</th>
+                                <th>Admin</th>
+                                <th>Customers</th>
+                                <th>Active Loans</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for org in recent_orgs %}
+                            <tr>
+                                <td>{{ org.name }}</td>
+                                <td>
+                                    {% if org.admin %}
+                                        {{ org.admin.full_name or org.admin.username }}
+                                    {% else %}
+                                        <span class="text-muted">No admin assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ org.get_stats().customer_count|format_number }}</td>
+                                <td>{{ org.get_stats().active_loans|format_number }}</td>
+                                <td>
+                                    {% if org.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if org.admin %}
+                                    <a href="{{ url_for('login_as_admin', admin_id=org.admin.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-sign-in-alt"></i> Login
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="fas fa-exclamation-triangle"></i> No Admin
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-plus-circle"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('create_organization') }}" class="btn btn-success">
+                        <i class="fas fa-building"></i> Create New Organization
+                    </a>
+                    <a href="{{ url_for('manage_organizations') }}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Manage All Organizations
+                    </a>
+                    <a href="{{ url_for('manage_all_admins') }}" class="btn btn-info">
+                        <i class="fas fa-users-cog"></i> Manage All Admins
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

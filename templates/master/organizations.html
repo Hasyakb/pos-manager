@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-building"></i> Manage Organizations</h2>
+
+<div class="row mb-3">
+    <div class="col-md-12 text-end">
+        <a href="{{ url_for('create_organization') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Create New Organization
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for stat in org_stats %}
+    <div class="col-md-6 mb-4">
+        <div class="card {% if not stat.org.is_active %}border-danger{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-building"></i> {{ stat.org.name }}
+                </h5>
+                <span class="badge {% if stat.org.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                    {% if stat.org.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Admin:</small>
+                        <p>
+                            {% if stat.org.admin %}
+                                <strong>{{ stat.org.admin.full_name or stat.org.admin.username }}</strong><br>
+                                <small>{{ stat.org.admin.email or 'No email' }}</small>
+                            {% else %}
+                                <span class="text-danger">No admin assigned!</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Created:</small>
+                        <p>{{ stat.org.created_at.strftime('%Y-%m-%d') if stat.org.created_at else 'N/A' }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-3 text-center">
+                        <div class="border rounded p-2">
+                            <h6 class="mb-0">{{ stat.customer_count|format_number }}</h6>
+                            <small>Customers</small>
+                            <small class="d-block text-muted">/{{ stat.org.max_customers }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="border rounded p-2">
+                            <h6 class="mb-0">{{ stat.active_loans|format_number }}</h6>
+                            <small>Active Loans</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="border rounded p-2">
+                            <h6 class="mb-0 text-success">{{ stat.total_savings|format_currency }}</h6>
+                            <small>Total Savings</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="border rounded p-2">
+                            <h6 class="mb-0 text-danger">{{ stat.total_loans_outstanding|format_currency }}</h6>
+                            <small>Loans Outstanding</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-flex">
+                    <a href="{{ url_for('edit_organization', org_id=stat.org.id) }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{{ url_for('toggle_org_status', org_id=stat.org.id) }}" 
+                       class="btn btn-sm {% if stat.org.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                        <i class="fas {% if stat.org.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                        {% if stat.org.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </a>
+                    {% if stat.org.admin %}
+                    <a href="{{ url_for('login_as_admin', admin_id=stat.org.admin.id) }}" 
+                       class="btn btn-sm btn-info">
+                        <i class="fas fa-sign-in-alt"></i> Login as Admin
+                    </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ stat.org.id }}">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal{{ stat.org.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Delete Organization</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to permanently delete <strong>{{ stat.org.name }}</strong>?</p>
+                    <p class="text-danger">This will delete ALL data associated with this organization including:</p>
+                    <ul>
+                        <li>All customers and their information</li>
+                        <li>All savings and loan records</li>
+                        <li>All proxy collections</li>
+                        <li>The admin account</li>
+                    </ul>
+                    <p class="text-danger fw-bold">This action cannot be undone!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('delete_organization', org_id=stat.org.id) }}">
+                        <button type="submit" class="btn btn-danger">Permanently Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

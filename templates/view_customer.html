@@ -1,0 +1,451 @@
+<!-- templates/view_customer.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Customer Information Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-user-circle"></i> Customer Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5>{{ customer.name }}</h5>
+                    {% if customer.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-warning">Inactive / Deleted</span>
+                    {% endif %}
+                </div>
+                <p>
+                    <strong><i class="fas fa-phone"></i> Phone:</strong> {{ customer.phone }}<br>
+                    <strong><i class="fas fa-envelope"></i> Email:</strong> {{ customer.email or 'N/A' }}<br>
+                    <strong><i class="fas fa-map-marker-alt"></i> Address:</strong> {{ customer.address or 'N/A' }}<br>
+                    <strong><i class="fas fa-calendar-alt"></i> Registered:</strong> {{ customer.registration_date.strftime('%Y-%m-%d') }}
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('edit_customer', customer_id=customer.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Customer
+                    </a>
+                    {% if customer.is_active %}
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash-alt"></i> Delete Customer
+                        </button>
+                    {% else %}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#restoreModal">
+                            <i class="fas fa-undo-alt"></i> Restore Customer
+                        </button>
+                    {% endif %}
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#proxyModal">
+                        <i class="fas fa-user-check"></i> Proxy Collection
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Financial Summary Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-chart-pie"></i> Financial Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-piggy-bank fa-2x text-success mb-2"></i>
+                                <h5 class="text-success">Total Savings</h5>
+                                <h3>{{ customer.total_savings()|format_currency }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-hand-holding-usd fa-2x text-danger mb-2"></i>
+                                <h5 class="text-danger">Loan Balance</h5>
+                                <h3>{{ customer.total_loan_balance()|format_currency }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded p-3 bg-light">
+                                <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                                <h5 class="text-primary">Net Worth</h5>
+                                <h3>{{ (customer.total_savings() - customer.total_loan_balance())|format_currency }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Warning for inactive customers -->
+        {% if not customer.is_active %}
+        <div class="alert alert-warning mb-4">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Inactive Customer:</strong> This customer has been deactivated. 
+            <a href="#" data-bs-toggle="modal" data-bs-target="#restoreModal" class="alert-link">Click here to restore</a> if needed.
+        </div>
+        {% endif %}
+        
+        <!-- Add Savings Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-plus-circle"></i> Add Savings Transaction</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_saving', customer_id=customer.id) }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Transaction Type</label>
+                        <select name="transaction_type" class="form-select" required>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdraw</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Amount (₦)</label>
+                        <input type="number" name="amount" class="form-control" placeholder="Amount in Naira" step="0.01" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus-circle"></i> Add Transaction
+                        </button>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Description (Optional)</label>
+                        <input type="text" name="description" class="form-control" placeholder="Enter description">
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Add Loan Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-hand-holding-usd"></i> Disburse Loan</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_loan', customer_id=customer.id) }}" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Loan Amount (₦)</label>
+                        <input type="number" name="amount" class="form-control" placeholder="Amount in Naira" step="0.01" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-hand-holding-usd"></i> Disburse Loan
+                        </button>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Description (Optional)</label>
+                        <input type="text" name="description" class="form-control" placeholder="Enter loan purpose">
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Active Loans Card -->
+        {% if loans %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-chart-line"></i> Active Loans</h4>
+            </div>
+            <div class="card-body">
+                {% for loan in loans %}
+                <div class="border-bottom mb-3 pb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong><i class="fas fa-money-bill-wave"></i> Loan Amount:</strong> {{ loan.amount|format_currency }}<br>
+                            <strong><i class="fas fa-undo-alt"></i> Repaid:</strong> {{ loan.amount_repaid|format_currency }}<br>
+                            <strong><i class="fas fa-chart-line"></i> Remaining:</strong> 
+                            <span class="{% if loan.remaining_balance() > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                {{ loan.remaining_balance()|format_currency }}
+                            </span><br>
+                            {% if loan.description %}
+                            <small class="text-muted"><i class="fas fa-align-left"></i> {{ loan.description }}</small><br>
+                            {% endif %}
+                            <small class="text-muted"><i class="fas fa-calendar-alt"></i> Loan Date: {{ loan.loan_date.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="POST" action="{{ url_for('repay_loan', customer_id=customer.id) }}">
+                                <input type="hidden" name="loan_id" value="{{ loan.id }}">
+                                <label class="form-label">Payment Amount (₦)</label>
+                                <div class="input-group">
+                                    <input type="number" name="amount" class="form-control" placeholder="Amount" step="0.01" required>
+                                    <select name="payment_method" class="form-select" style="max-width: 150px;">
+                                        <option value="cash">Cash</option>
+                                        <option value="savings_deduction">Use Savings</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check"></i> Pay
+                                    </button>
+                                </div>
+                                <small class="text-muted mt-1 d-block">
+                                    Available Savings: {{ customer.total_savings()|format_currency }}
+                                </small>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Completed Loans Card -->
+        {% if completed_loans %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-check-circle"></i> Completed Loans</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Repaid</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in completed_loans %}
+                            <tr>
+                                <td>{{ loan.loan_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ loan.amount|format_currency }}</td>
+                                <td class="text-success">{{ loan.amount_repaid|format_currency }}</td>
+                                <td>{{ loan.description or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Savings History Card -->
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-history"></i> Savings History</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for saving in savings_history|reverse %}
+                            <tr>
+                                <td>
+                                    <strong>{{ saving.transaction_date.strftime('%Y-%m-%d') }}</strong><br>
+                                    <small class="text-muted">{{ saving.transaction_date.strftime('%H:%M:%S') }}</small>
+                                </td>
+                                <td>
+                                    {% if saving.transaction_type == 'deposit' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-arrow-down"></i> Deposit
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-arrow-up"></i> Withdrawal
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="{% if saving.transaction_type == 'deposit' %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                    {{ saving.amount|format_currency }}
+                                </td>
+                                <td>
+                                    {{ saving.description or '-' }}
+                                    {% if 'Proxy collection' in saving.description %}
+                                        <br><small class="text-info"><i class="fas fa-user-check"></i> Proxy Collection</small>
+                                    {% endif %}
+                                    {% if 'Loan payment deduction' in saving.description %}
+                                        <br><small class="text-warning"><i class="fas fa-hand-holding-usd"></i> Loan Payment</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <i class="fas fa-info-circle fa-2x mb-2 text-muted"></i><br>
+                                    No savings transactions found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if savings_history %}
+                <div class="mt-3 text-muted">
+                    <small><i class="fas fa-chart-line"></i> Total Records: {{ savings_history|length|format_number }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ customer.name }}</strong>?</p>
+                <p class="text-danger">
+                    <i class="fas fa-info-circle"></i> 
+                    This will deactivate the customer. You can restore them later from the "Deleted Customers" section.
+                </p>
+                {% if customer.total_loan_balance() > 0 %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This customer has an outstanding loan balance of 
+                    {{ customer.total_loan_balance()|format_currency }}.
+                    Please ensure all loans are settled before deletion.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_customer', customer_id=customer.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo-alt"></i> Confirm Restore
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to restore <strong>{{ customer.name }}</strong>?</p>
+                <p>This will make the customer active again. All their savings and loan history will be restored.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    After restoration, the customer will be able to access all services again.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('restore_customer', customer_id=customer.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Yes, Restore
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Proxy Collection Modal -->
+<div class="modal fade" id="proxyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-check"></i> Proxy Collection for {{ customer.name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('proxy_collection', customer_id=customer.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Collector Name *</label>
+                            <input type="text" name="collector_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Collector Phone</label>
+                            <input type="text" name="collector_phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Collection Type *</label>
+                            <select name="collection_type" class="form-select" id="collectionType" required>
+                                <option value="loan">Loan Payment</option>
+                                <option value="saving">Savings Deposit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount (₦) *</label>
+                            <input type="number" name="amount" class="form-control" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="loanSelectDiv" style="display: none;">
+                        <label class="form-label">Select Loan</label>
+                        <select name="loan_id" class="form-select">
+                            {% for loan in loans %}
+                            <option value="{{ loan.id }}">
+                                Loan #{{ loan.id }} - {{ loan.remaining_balance()|format_currency }} remaining
+                                {% if loan.description %} - {{ loan.description }}{% endif %}
+                            </option>
+                            {% else %}
+                            <option value="">No active loans available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship to Customer</label>
+                        <input type="text" name="relationship" class="form-control" placeholder="e.g., Spouse, Child, Friend, Colleague">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Record Collection
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle collection type change to show/hide loan selection
+    document.getElementById('collectionType').addEventListener('change', function() {
+        var loanDiv = document.getElementById('loanSelectDiv');
+        if (this.value === 'loan') {
+            loanDiv.style.display = 'block';
+        } else {
+            loanDiv.style.display = 'none';
+        }
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% endblock %}

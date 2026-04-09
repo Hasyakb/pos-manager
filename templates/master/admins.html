@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-users-cog"></i> Manage All Admins</h2>
+
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-user-shield"></i> System Admins (Non-Master)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Organization</th>
+                        <th>Last Login</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                    <tr>
+                        <td>{{ admin.id }}</td>
+                        <td>{{ admin.username }}</td>
+                        <td>{{ admin.full_name or '-' }}</td>
+                        <td>{{ admin.email or '-' }}</td>
+                        <td>
+                            {% if admin.organization %}
+                                {{ admin.organization.name }}
+                            {% else %}
+                                <span class="text-muted">No organization</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Never' }}</td>
+                        <td>
+                            {% if admin.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('toggle_admin_status', admin_id=admin.id) }}" 
+                               class="btn btn-sm {% if admin.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                               onclick="return confirm('Toggle admin status?')">
+                                <i class="fas {% if admin.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                                {% if admin.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </a>
+                            {% if admin.organization %}
+                            <a href="{{ url_for('login_as_admin', admin_id=admin.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <i class="fas fa-info-circle fa-2x mb-2 text-muted"></i><br>
+                            No non-master admins found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> About Admin Management</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-0">
+            <i class="fas fa-shield-alt"></i>
+            <strong>Note:</strong> Master admin accounts cannot be modified here. To create new admins, 
+            <a href="{{ url_for('create_organization') }}" class="alert-link">create a new organization</a> 
+            which will automatically create an admin account for that organization.
+        </div>
+    </div>
+</div>
+{% endblock %}

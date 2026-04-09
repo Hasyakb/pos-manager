@@ -1,0 +1,152 @@
+<!-- templates/deleted_customers.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-trash-alt"></i> Deleted Customers</h2>
+
+<div class="alert alert-warning mb-4">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Note:</strong> Deleted customers are inactive but their data is preserved. You can restore them at any time.
+    Only administrators can permanently delete customers.
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('deleted_customers') }}" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search by name or phone" value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('customers') }}" class="btn btn-success">
+            <i class="fas fa-users"></i> Active Customers
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for customer in customers %}
+    <div class="col-md-6 mb-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ customer.name }}</h5>
+                    <span class="badge bg-warning">Deleted / Inactive</span>
+                </div>
+                <p class="card-text">
+                    <i class="fas fa-phone"></i> {{ customer.phone }}<br>
+                    <i class="fas fa-envelope"></i> {{ customer.email or 'N/A' }}<br>
+                    <i class="fas fa-calendar-alt"></i> Registered: {{ customer.registration_date.strftime('%Y-%m-%d') }}<br>
+                    <i class="fas fa-piggy-bank"></i> Savings: {{ customer.total_savings()|format_currency }}<br>
+                    <i class="fas fa-hand-holding-usd"></i> Loan Balance: {{ customer.total_loan_balance()|format_currency }}
+                </p>
+                <div class="btn-group w-100">
+                    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#restoreModal{{ customer.id }}">
+                        <i class="fas fa-undo-alt"></i> Restore
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#permanentDeleteModal{{ customer.id }}">
+                        <i class="fas fa-trash-alt"></i> Permanent Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Restore Confirmation Modal -->
+    <div class="modal fade" id="restoreModal{{ customer.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-undo-alt"></i> Confirm Restore
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to restore <strong>{{ customer.name }}</strong>?</p>
+                    <p>This will make the customer active again. All their savings and loan history will be restored.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('restore_customer', customer_id=customer.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Yes, Restore
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Permanent Delete Confirmation Modal -->
+    <div class="modal fade" id="permanentDeleteModal{{ customer.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Permanent Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning: This action cannot be undone!</strong>
+                    </div>
+                    <p>Are you sure you want to permanently delete <strong>{{ customer.name }}</strong>?</p>
+                    <p>This will permanently remove:</p>
+                    <ul>
+                        <li>All customer information</li>
+                        <li>All savings transaction history</li>
+                        <li>All loan records</li>
+                        <li>All proxy collection records</li>
+                    </ul>
+                    {% if customer.total_loan_balance() > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This customer has an outstanding loan balance of 
+                        {{ customer.total_loan_balance()|format_currency }}.
+                    </div>
+                    {% endif %}
+                    {% if customer.total_savings() > 0 %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        This customer has savings of {{ customer.total_savings()|format_currency }}.
+                    </div>
+                    {% endif %}
+                    <p class="text-danger fw-bold mt-3">This action is irreversible!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('permanent_delete_customer', customer_id=customer.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Permanently Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No deleted customers found.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .btn-group {
+        gap: 5px;
+    }
+    .btn-group .btn {
+        flex: 1;
+    }
+</style>
+{% endblock %}

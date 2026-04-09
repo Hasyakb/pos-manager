@@ -1,0 +1,62 @@
+<!-- templates/proxy_collection.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4>Proxy Collection for {{ customer.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Collector Name *</label>
+                        <input type="text" name="collector_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Collector Phone</label>
+                        <input type="text" name="collector_phone" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Collection Type *</label>
+                        <select name="collection_type" class="form-select" id="collectionType" required>
+                            <option value="loan">Loan Payment</option>
+                            <option value="saving">Savings Deposit</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="loanSelectDiv">
+                        <label>Select Loan</label>
+                        <select name="loan_id" class="form-select">
+                            {% for loan in active_loans %}
+                            <option value="{{ loan.id }}">Loan #{{ loan.id }} - ${{ "%.2f"|format(loan.remaining_balance()) }} remaining</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Amount *</label>
+                        <input type="number" name="amount" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Relationship to Customer</label>
+                        <input type="text" name="relationship" class="form-control" placeholder="e.g., Spouse, Child, Friend">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Record Collection</button>
+                    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('collectionType').addEventListener('change', function() {
+        var loanDiv = document.getElementById('loanSelectDiv');
+        if (this.value === 'loan') {
+            loanDiv.style.display = 'block';
+        } else {
+            loanDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
