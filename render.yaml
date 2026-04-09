@@ -13,9 +13,5 @@ services:
         generateValue: true
       - key: FLASK_DEBUG
         value: false
-      - key: SESSION_COOKIE_SECURE
-        value: true
-
-databases:
-  - name: loan-savings-db
-    plan: free
+      - key: PYTHON_VERSION
+        value: 3.11.12
